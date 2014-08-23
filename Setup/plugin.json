@@ -1,0 +1,30 @@
+{
+    "title": "Braintree payment method",
+    "version": "1.00",
+    "name": "Braintree",
+    "description": "Braintree payment method to accept Accept Credit Cards",
+    "author": "ImpressPages",
+    "options": [
+        {
+            "label": "Mode",
+            "name": "mode",
+            "type": "select",
+            "values": ["Production", "Test", "Skip"],
+            "default": "Production"
+        },
+        {
+            "label": "Braintree account ID (production mode)",
+            "name": "sid",
+            "type": "text",
+            "default": ""
+        },
+        {
+            "label": "Braintree account ID (test mode)",
+            "name": "testSid",
+            "type": "text",
+            "note": "The one you create in Braintree sandbox",
+            "default": ""
+        }
+
+    ]
+}
