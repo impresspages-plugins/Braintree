@@ -14,11 +14,27 @@ class PaymentModel
     const MODE_TEST = 'Test';
     const MODE_SKIP = 'Skip';
 
+    protected static $initialized = false;
+
 
     protected static $instance;
+    protected static $clientToken;
+
+    protected $lastError = null;
 
     protected function __construct()
     {
+        if (self::$initialized == false) {
+            require_once('lib/Braintree.php');
+
+
+            \Braintree_Configuration::environment('sandbox');
+            \Braintree_Configuration::merchantId('xd2kdfqd2n845gmd'); //merchant id
+            \Braintree_Configuration::publicKey('hj3p5mfg5d3tzm2f'); //public key
+            \Braintree_Configuration::privateKey('e540442c1f4fb0cd3daa4d11419070f2'); //private key
+
+            self::$initialized = true;
+        }
     }
 
     protected function __clone()
@@ -36,6 +52,54 @@ class PaymentModel
         }
 
         return self::$instance;
+    }
+
+    public function clientToken()
+    {
+        if (self::$clientToken) {
+            return self::$clientToken;
+        }
+
+        $options = array();
+        if (ipUser()->loggedIn()) {
+            $options['userId'] = ipUser()->userId();
+        }
+        $clientToken = \Braintree_ClientToken::generate($options);
+
+        self::$clientToken = $clientToken;
+        return self::$clientToken;
+    }
+
+    /**
+     * @param $amount in cents
+     * @param $nonce
+     */
+    public function charge($amount, $nonce)
+    {
+        $result = \Braintree_Transaction::sale(array(
+                'amount' => $amount / 100,
+                'paymentMethodNonce' => $nonce
+            )
+        );
+
+        $transactionId = $result->transaction->id;
+
+        $result = \Braintree_Transaction::submitForSettlement($transactionId);
+
+        if ($result->success) {
+            return true;
+        } else {
+            $this->lastError = implode('. ', $result->errors);
+            return false;
+        }
+
+
+    }
+
+    public function lastError()
+    {
+        return $this->lastError;
+
     }
 
     public function processCallback($postData)
@@ -154,82 +218,73 @@ class PaymentModel
     }
 
 
-
-
-    public function getBraintreeForm($paymentId)
-    {
-        require_once('lib/Braintree.php');
-
-
-//        \Braintree_Configuration::environment('sandbox');
-//        \Braintree_Configuration::merchantId('xd2kdfqd2n845gmd'); //merchant id
-//        \Braintree_Configuration::publicKey('hj3p5mfg5d3tzm2f'); //public key
-//        \Braintree_Configuration::privateKey('e540442c1f4fb0cd3daa4d11419070f2'); //private key
 //
-//        $form = \Braintree_Charge::form($params, 'auto');
-
-
-
-
-        return $form;
-
-
-
-        if (!$this->getSid()) {
-            throw new \Ip\Exception('Please enter configuration values for Braintree plugin');
-        }
-
-
-        $payment = Model::getPayment($paymentId);
-        if (!$payment) {
-            throw new \Ip\Exception("Can't find order id. " . $paymentId);
-        }
-
-
-        $currency = $payment['currency'];
-        $privateData = array(
-            'paymentId' => $paymentId,
-            'userId' => $payment['userId'],
-            'securityCode' => $payment['securityCode']
-        );
-
-
-
-        $values = array(
-//            'business' => $this->getSid(),
-//            'amount' => $payment['price'] / 100,
+//
+//    public function getBraintreeForm($paymentId)
+//    {
+//
+//
+//
+//
+//        return $form;
+//
+//
+//
+//        if (!$this->getSid()) {
+//            throw new \Ip\Exception('Please enter configuration values for Braintree plugin');
+//        }
+//
+//
+//        $payment = Model::getPayment($paymentId);
+//        if (!$payment) {
+//            throw new \Ip\Exception("Can't find order id. " . $paymentId);
+//        }
+//
+//
+//        $currency = $payment['currency'];
+//        $privateData = array(
+//            'paymentId' => $paymentId,
+//            'userId' => $payment['userId'],
+//            'securityCode' => $payment['securityCode']
+//        );
+//
+//
+//
+//        $values = array(
+////            'business' => $this->getSid(),
+////            'amount' => $payment['price'] / 100,
+////            'currency_code' => $currency,
+////            'no_shipping' => 1,
+////            'custom' => json_encode($privateData),
+//            'return' => ipRouteUrl('Braintree_userBack'),
+//            'notify_url' => ipRouteUrl('Braintree_ipn'),
+////            'item_name' => $payment['title'],
+//            'item_number' => $payment['id']
+//        );
+//
+//        if (!empty($payment['cancelUrl'])) {
+//            $values['cancel_return'] = $payment['cancelUrl'];
+//        }
+//
+//
+//
+//        $params = array(
+//            'sid' => '1817037',
+//            'mode' => '2CO',
+//            'li_0_product_id' => $payment['id'],
+//            'li_0_name' => $payment['title'],
+//            'li_0_price' => $payment['price'] / 100,
 //            'currency_code' => $currency,
-//            'no_shipping' => 1,
 //            'custom' => json_encode($privateData),
-            'return' => ipRouteUrl('Braintree_userBack'),
-            'notify_url' => ipRouteUrl('Braintree_ipn'),
-//            'item_name' => $payment['title'],
-            'item_number' => $payment['id']
-        );
-
-        if (!empty($payment['cancelUrl'])) {
-            $values['cancel_return'] = $payment['cancelUrl'];
-        }
-
-
-
-        $params = array(
-            'sid' => '1817037',
-            'mode' => '2CO',
-            'li_0_product_id' => $payment['id'],
-            'li_0_name' => $payment['title'],
-            'li_0_price' => $payment['price'] / 100,
-            'currency_code' => $currency,
-            'custom' => json_encode($privateData),
-            'demo' => $this->isTestMode() ? 'Y' : 'N',
-            'x_receipt_link_url' => 'http://develop.apro.lt',
-            'return_url' => 'http://develop.apro.lt'
-        );
-
-
-
-        return $form;
-    }
+//            'demo' => $this->isTestMode() ? 'Y' : 'N',
+//            'x_receipt_link_url' => 'http://develop.apro.lt',
+//            'return_url' => 'http://develop.apro.lt'
+//        );
+//
+//
+//
+//        return $form;
+//    }
 
     /**
      *

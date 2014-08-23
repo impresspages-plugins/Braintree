@@ -7,6 +7,12 @@ $routes['braintree/pay/{paymentId}/{securityCode}'] = array(
     'action' => 'pay'
 );
 
+$routes['braintree/charge'] = array(
+    'name' => 'Braintree_charge',
+    'plugin' => 'Braintree',
+    'controller' => 'SiteController',
+    'action' => 'charge'
+);
 
 $routes['braintree/ipn'] = array(
     'name' => 'Braintree_ipn',

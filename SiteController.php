@@ -12,6 +12,8 @@ class SiteController extends \Ip\Controller
 {
     public function pay($paymentId, $securityCode)
     {
+
+
         $order = Model::getPayment($paymentId);
         if (!$order) {
             throw new \Ip\Exception('Order ' . $paymentId . ' doesn\'t exist');
@@ -27,26 +29,67 @@ class SiteController extends \Ip\Controller
             $statusPageUrl = ipRouteUrl('Braintree_status', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
             $answer = new \Ip\Response\Redirect($statusPageUrl);
         } else {
-            //redirect to the payment
-            $paymentModel = PaymentModel::instance();
-
+            //show credit card form
             ipAddJs('https://js.braintreegateway.com/v2/braintree.js');
             ipAddJs('assets/braintree.js');
 
-            $form = '<form id="checkout" method="post" action="/checkout">
-  <div id="dropin"></div>
-  <input type="submit" value="Pay $10">
-</form>';
+            $clientToken = PaymentModel::instance()->clientToken();
+            ipAddJsVariable('braintreeClientToken', $clientToken);
+
 
             $data = array(
-                'form' => $form
+                'postUrl' => ipRouteUrl('Braintree_charge'),
+                'paymentId' => $paymentId
             );
 
-            $answer = ipView('view/page/paymentRedirect.php', $data)->render();
+            $answer = ipView('view/page/paymentForm.php', $data)->render();
         }
 
 
         return $answer;
+
+    }
+
+    public function charge()
+    {
+        $nonce = ipRequest()->getPost('payment_method_nonce');
+        if (empty($nonce)) {
+            throw new \Ip\Exception('Empty payment nonce.');
+        }
+
+        $paymentId = ipRequest()->getPost('paymentId');
+        $payment = Model::getPayment($paymentId);
+        if (!$payment) {
+            throw new \Ip\Exception('Unknown payment. Payment ID ' . $paymentId);
+        }
+
+        $accountCurrency = ipGetOption('Braintree.currency');
+        $amount = $payment['price'];
+
+        if ($accountCurrency != $payment['currency']) {
+            $amount = ipConvertCurrency($amount, $payment['currency'], $accountCurrency);
+            if ($amount === null) {
+                $errorData = array(
+                    'sourceCurrency' => $payment['currency'],
+                    'destinationCurrency' => $accountCurrency
+                );
+                $answer = ipView('view/page/currencyConversionError.php', $errorData);
+                return $answer;
+            }
+        }
+
+        /** @var $result \Braintree_Result_Successful */
+        $paymentModel = PaymentModel::instance();
+        $success = $paymentModel->charge($amount, $nonce);
+
+        if (!$success) {
+            return $paymentModel->lastError();
+        }
+
+
+        return 'Payment has been made';
+
+
 
     }
 

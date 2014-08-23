@@ -24,6 +24,12 @@
             "type": "text",
             "note": "The one you create in Braintree sandbox",
             "default": ""
+        },
+        {
+            "label": "Braintree account currency",
+            "name": "currency",
+            "type": "text",
+            "default": "USD"
         }
 
     ]

@@ -53,10 +53,10 @@ class PublicController extends \Ip\Controller
 
     protected function processNotification()
     {
-        $paymentModel = PaymentModel::instance();
-        $postData = ipRequest()->getPost();
+//        $paymentModel = PaymentModel::instance();
+//        $postData = ipRequest()->getPost();
         ipLog()->info('Braintree.ipn: Braintree notification', $postData);
-        $paymentModel->processCallback($postData);
+//        $paymentModel->processCallback($postData);
     }
 
 }
