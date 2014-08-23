@@ -30,8 +30,16 @@ class SiteController extends \Ip\Controller
             //redirect to the payment
             $paymentModel = PaymentModel::instance();
 
+            ipAddJs('https://js.braintreegateway.com/v2/braintree.js');
+            ipAddJs('assets/braintree.js');
+
+            $form = '<form id="checkout" method="post" action="/checkout">
+  <div id="dropin"></div>
+  <input type="submit" value="Pay $10">
+</form>';
+
             $data = array(
-                'form' => $paymentModel->getBraintreeForm($paymentId)
+                'form' => $form
             );
 
             $answer = ipView('view/page/paymentRedirect.php', $data)->render();

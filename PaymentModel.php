@@ -159,6 +159,22 @@ class PaymentModel
     public function getBraintreeForm($paymentId)
     {
         require_once('lib/Braintree.php');
+
+
+//        \Braintree_Configuration::environment('sandbox');
+//        \Braintree_Configuration::merchantId('xd2kdfqd2n845gmd'); //merchant id
+//        \Braintree_Configuration::publicKey('hj3p5mfg5d3tzm2f'); //public key
+//        \Braintree_Configuration::privateKey('e540442c1f4fb0cd3daa4d11419070f2'); //private key
+//
+//        $form = \Braintree_Charge::form($params, 'auto');
+
+
+
+
+        return $form;
+
+
+
         if (!$this->getSid()) {
             throw new \Ip\Exception('Please enter configuration values for Braintree plugin');
         }
@@ -210,12 +226,6 @@ class PaymentModel
             'return_url' => 'http://develop.apro.lt'
         );
 
-        Braintree_Configuration::environment('sandbox');
-        Braintree_Configuration::merchantId('xd2kdfqd2n845gmd'); //merchant id
-        Braintree_Configuration::publicKey('hj3p5mfg5d3tzm2f'); //public key
-        Braintree_Configuration::privateKey('e540442c1f4fb0cd3daa4d11419070f2'); //private key
-
-        $form = \Braintree_Charge::form($params, 'auto');
 
 
         return $form;
