@@ -83,7 +83,6 @@ class SiteController extends \Ip\Controller
             }
         }
 
-        /** @var $result \Braintree_Result_Successful */
         $paymentModel = PaymentModel::instance();
         $success = $paymentModel->charge($amount, $nonce);
 
@@ -94,15 +93,26 @@ class SiteController extends \Ip\Controller
                 'retryUrl' => $retryUrl
             );
             $answer = ipView('view/page/paymentError.php', $viewData);
+            $filterData = array(
+                'error' => $paymentModel->lastError(),
+                'retryUrl' => $retryUrl,
+                'paymentId' => $paymentId
+            );
+            $answer = ipFilter('Braintree_paymentErrorResponseError', $answer, $filterData);
             return $answer;
         }
 
 
+        $payment = Model::getPayment($paymentId);
 
-        return 'Payment has been made';
+        $orderUrl = ipRouteUrl('Braintree_status', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
+        $response = new \Ip\Response\Redirect($orderUrl);
 
-
-
+        if (!empty($payment['successUrl'])) {
+            $response = new \Ip\Response\Redirect($payment['successUrl']);
+        }
+        $response = ipFilter('Braintree_paymentCompleteResponse', $response);
+        return $response;
     }
 
     public function status($paymentId, $securityCode)
