@@ -98,6 +98,7 @@ class SiteController extends \Ip\Controller
         }
 
 
+
         return 'Payment has been made';
 
 

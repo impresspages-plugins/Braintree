@@ -13,23 +13,50 @@
             "default": "Production"
         },
         {
-            "label": "Braintree account ID (production mode)",
-            "name": "sid",
+            "label": "Braintree account currency",
+            "name": "currency",
+            "type": "text",
+            "default": "USD",
+            "note": "Has to be the same as used on Braintree account."
+        },
+        {
+            "label": "Braintree merchant ID (production mode)",
+            "name": "merchantId",
             "type": "text",
             "default": ""
         },
         {
-            "label": "Braintree account ID (test mode)",
-            "name": "testSid",
+            "label": "Braintree public key (production mode)",
+            "name": "publicKey",
+            "type": "text",
+            "default": ""
+        },
+        {
+            "label": "Braintree private key (production mode)",
+            "name": "privateKey",
+            "type": "text",
+            "default": ""
+        },
+        {
+            "label": "Braintree merchant ID (test mode)",
+            "name": "testMerchantId",
             "type": "text",
             "note": "The one you create in Braintree sandbox",
             "default": ""
         },
         {
-            "label": "Braintree account currency",
-            "name": "currency",
+            "label": "Braintree public key (test mode)",
+            "name": "testPublicKey",
             "type": "text",
-            "default": "USD"
+            "note": "The one you create in Braintree sandbox",
+            "default": ""
+        },
+        {
+            "label": "Braintree private key (test mode)",
+            "name": "testPrivateKey",
+            "type": "text",
+            "note": "The one you create in Braintree sandbox",
+            "default": ""
         }
 
     ]
