@@ -39,7 +39,8 @@ class SiteController extends \Ip\Controller
 
             $data = array(
                 'postUrl' => ipRouteUrl('Braintree_charge'),
-                'paymentId' => $paymentId
+                'paymentId' => $paymentId,
+                'securityCode' => $securityCode
             );
 
             $answer = ipView('view/page/paymentForm.php', $data)->render();
@@ -62,6 +63,9 @@ class SiteController extends \Ip\Controller
         if (!$payment) {
             throw new \Ip\Exception('Unknown payment. Payment ID ' . $paymentId);
         }
+        $securityCode = ipRequest()->getPost('securityCode');
+        $retryUrl = ipRouteUrl('Braintree_pay', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
+
 
         $accountCurrency = ipGetOption('Braintree.currency');
         $amount = $payment['price'];
@@ -71,7 +75,8 @@ class SiteController extends \Ip\Controller
             if ($amount === null) {
                 $errorData = array(
                     'sourceCurrency' => $payment['currency'],
-                    'destinationCurrency' => $accountCurrency
+                    'destinationCurrency' => $accountCurrency,
+                    'retryUrl' => $retryUrl
                 );
                 $answer = ipView('view/page/currencyConversionError.php', $errorData);
                 return $answer;
@@ -82,8 +87,14 @@ class SiteController extends \Ip\Controller
         $paymentModel = PaymentModel::instance();
         $success = $paymentModel->charge($amount, $nonce);
 
+
         if (!$success) {
-            return $paymentModel->lastError();
+            $viewData = array(
+                'error' => $paymentModel->lastError(),
+                'retryUrl' => $retryUrl
+            );
+            $answer = ipView('view/page/paymentError.php', $viewData);
+            return $answer;
         }
 
 

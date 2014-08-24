@@ -77,11 +77,16 @@ class PaymentModel
     public function charge($amount, $nonce)
     {
         $result = \Braintree_Transaction::sale(array(
-                'amount' => $amount / 100,
+                'amount' => -$amount / 100,
                 'paymentMethodNonce' => $nonce
             )
         );
 
+        if (!$result->success) {
+            $this->lastError = $result->errors->deepAll()[0]->message;
+            return false;
+
+        }
         $transactionId = $result->transaction->id;
 
         $result = \Braintree_Transaction::submitForSettlement($transactionId);
@@ -89,7 +94,7 @@ class PaymentModel
         if ($result->success) {
             return true;
         } else {
-            $this->lastError = implode('. ', $result->errors);
+            $this->lastError = implode('. ', $result->errors->deepAll());
             return false;
         }
 
