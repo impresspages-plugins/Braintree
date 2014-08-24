@@ -77,7 +77,7 @@ class PaymentModel
     public function charge($amount, $nonce)
     {
         $result = \Braintree_Transaction::sale(array(
-                'amount' => -$amount / 100,
+                'amount' => $amount / 100,
                 'paymentMethodNonce' => $nonce
             )
         );
