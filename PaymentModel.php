@@ -25,13 +25,15 @@ class PaymentModel
     protected function __construct()
     {
         if (self::$initialized == false) {
-            require_once('lib/Braintree.php');
+            if (!$this->isSkipMode()) {
+                require_once('lib/Braintree.php');
 
 
-            \Braintree_Configuration::environment($this->isTestMode() ? 'sandbox' : 'production');
-            \Braintree_Configuration::merchantId($this->merchantId()); //merchant id
-            \Braintree_Configuration::publicKey($this->publicKey()); //public key
-            \Braintree_Configuration::privateKey($this->privateKey()); //private key
+                \Braintree_Configuration::environment($this->isTestMode() ? 'sandbox' : 'production');
+                \Braintree_Configuration::merchantId($this->merchantId()); //merchant id
+                \Braintree_Configuration::publicKey($this->publicKey()); //public key
+                \Braintree_Configuration::privateKey($this->privateKey()); //private key
+            }
 
             self::$initialized = true;
         }
@@ -56,6 +58,9 @@ class PaymentModel
 
     public function clientToken()
     {
+        if ($this->isSkipMode()) {
+            throw new \Ip\Exception('Can\'t get client token in skip mode');
+        }
         if (self::$clientToken) {
             return self::$clientToken;
         }
@@ -108,8 +113,37 @@ class PaymentModel
     }
 
 
+    public function markAsPaid($paymentId, $dbData = array(), $eventData = array())
+    {
+        $payment = Model::getPayment($paymentId);
 
+        $dbData['isPaid'] = 1;
+        Model::update($paymentId, $dbData);
 
+        $info = array(
+            'id' => $payment['orderId'],
+            'paymentId' => $payment['id'],
+            'paymentMethod' => 'Braintree',
+            'title' => $payment['title'],
+            'userId' => $payment['userId']
+        );
+        $info = array_merge($info, $eventData);
+        ipEvent('ipPaymentReceived', $info);
+
+    }
+
+    public function successResponse($paymentId, $securityCode)
+    {
+        $payment = Model::getPayment($paymentId);
+
+        $orderUrl = ipRouteUrl('Braintree_status', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
+        $response = new \Ip\Response\Redirect($orderUrl);
+        if (!empty($payment['successUrl'])) {
+            $response = new \Ip\Response\Redirect($payment['successUrl']);
+        }
+        $response = ipFilter('Braintree_paymentCompleteResponse', $response);
+        return $response;
+    }
 
 
     public function merchantId()

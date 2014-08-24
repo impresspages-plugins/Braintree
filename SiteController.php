@@ -19,15 +19,19 @@ class SiteController extends \Ip\Controller
             throw new \Ip\Exception('Order ' . $paymentId . ' doesn\'t exist');
         }
 
-
+        $paymentModel = PaymentModel::instance();
+        if (!$order['isPaid'] && $paymentModel->isSkipMode()) {
+            $paymentModel->markAsPaid($paymentId);
+            $order = Model::getPayment($paymentId);
+        }
 
         if (!$order['userId'] && ipUser()->loggedIn()) {
             Model::update($paymentId, array('userId' => ipUser()->userId()));
         }
 
         if ($order['isPaid']) {
-            $statusPageUrl = ipRouteUrl('Braintree_status', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
-            $answer = new \Ip\Response\Redirect($statusPageUrl);
+            $response = $paymentModel->successResponse($paymentId, $securityCode);
+            return $response;
         } else {
             //show credit card form
             ipAddJs('https://js.braintreegateway.com/v2/braintree.js');
@@ -84,7 +88,11 @@ class SiteController extends \Ip\Controller
         }
 
         $paymentModel = PaymentModel::instance();
-        $success = $paymentModel->charge($amount, $nonce);
+
+        $success = true;
+        if (!$paymentModel->isSkipMode()) {
+            $success = $paymentModel->charge($amount, $nonce);
+        }
 
 
         if (!$success) {
@@ -102,16 +110,9 @@ class SiteController extends \Ip\Controller
             return $answer;
         }
 
+        $paymentModel->markAsPaid($paymentId);
 
-        $payment = Model::getPayment($paymentId);
-
-        $orderUrl = ipRouteUrl('Braintree_status', array('paymentId' => $paymentId, 'securityCode' => $securityCode));
-        $response = new \Ip\Response\Redirect($orderUrl);
-
-        if (!empty($payment['successUrl'])) {
-            $response = new \Ip\Response\Redirect($payment['successUrl']);
-        }
-        $response = ipFilter('Braintree_paymentCompleteResponse', $response);
+        $response = $paymentModel->successResponse($paymentId, $securityCode);
         return $response;
     }
 
