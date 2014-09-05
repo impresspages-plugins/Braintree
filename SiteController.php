@@ -19,7 +19,13 @@ class SiteController extends \Ip\Controller
             throw new \Ip\Exception('Order ' . $paymentId . ' doesn\'t exist');
         }
 
-        $paymentModel = PaymentModel::instance();
+        try {
+            $paymentModel = PaymentModel::instance();
+        } catch (\Braintree_Exception_Configuration $e) {
+            return 'Braintree configuration error: ' . esc($e->getMessage());
+        }
+
+
         if (!$order['isPaid'] && $paymentModel->isSkipMode()) {
             $paymentModel->markAsPaid($paymentId);
             $order = Model::getPayment($paymentId);

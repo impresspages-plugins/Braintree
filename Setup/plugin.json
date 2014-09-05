@@ -6,6 +6,16 @@
     "author": "ImpressPages",
     "options": [
         {
+            "label": "",
+            "type": "Info",
+            "html": "<p class=\"alert alert-info\">Please visit <a taret=\"_blank\" href=\"https://www.braintreepayments.com\">Braintree</a> website and create account. Then fill in the data bellow. You can have two separate accounts for testing and production modes.</p><p class=\"alert alert-info\">This is just the payment method. Please install <b>SimpleProduct</b> or other plugin to actually sell something.</p>"
+        },
+        {
+            "label": "",
+            "type": "Info",
+            "html": ""
+        },
+        {
             "label": "Mode",
             "name": "mode",
             "type": "select",
