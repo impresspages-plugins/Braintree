@@ -13,7 +13,7 @@ class PublicController extends \Ip\Controller
     public function ipn()
     {
         $this->processNotification();
-        //just sending empty OK status 200
+        //just sending an empty OK status 200
     }
 
     public function userBack()

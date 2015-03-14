@@ -17,6 +17,9 @@ class PaymentModel
     protected static $initialized = false;
 
 
+    /**
+     * @var PaymentModel
+     */
     protected static $instance;
     protected static $clientToken;
 
@@ -86,9 +89,11 @@ class PaymentModel
                 'paymentMethodNonce' => $nonce
             )
         );
-
         if (!$result->success) {
-            $this->lastError = $result->errors->deepAll()[0]->message;
+            $errors = $result->errors->deepAll();
+            if (!empty($errors[0])) {
+                $this->lastError = $errors[0]->message;
+            }
             return false;
 
         }
