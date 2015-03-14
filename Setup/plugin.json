@@ -1,6 +1,6 @@
 {
     "title": "Braintree payment method",
-    "version": "1.00",
+    "version": "1.01",
     "name": "Braintree",
     "description": "Braintree payment method to accept credit cards",
     "author": "ImpressPages",
