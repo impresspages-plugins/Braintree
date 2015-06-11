@@ -43,7 +43,7 @@ class PublicController extends \Ip\Controller
             $viewData = array(
                 'payment' => $payment
             );
-            $response = ipView('view/paymentError.php', $viewData);
+            $response = ipView('view/page/paymentError2.php', $viewData);
             $response = ipFilter('Braintree_userBackResponseError', $response);
             return $response;
         }
